@@ -10,6 +10,8 @@ declare module "LinkedList" {
     pop(): any;
     unshift(value: any): void;
     shift(): any;
+    toString(): string;
+    toJSON(): Array<any>;
   }
   
   export interface IListNode {
