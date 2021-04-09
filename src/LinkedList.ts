@@ -70,4 +70,27 @@ export default class LinkedArray implements ILinkedList {
   public unshift() {}
 
   public shift() {}
+
+  public toString(): string {
+    let result = '[';
+    const length = this.length - 1;
+
+    const getStringValue = ({ value }, index: number) => {
+      result =
+        length === index ? `${(result += value)}` : `${(result += value)}, `;
+    };
+
+    this.forEach(getStringValue);
+
+    return (result += ']');
+  }
+
+  public toJSON(): Array<any> {
+    let result = [];
+
+    const getStringValue = ({ value }) => result.push(value);
+    this.forEach(getStringValue);
+
+    return result;
+  }
 }
