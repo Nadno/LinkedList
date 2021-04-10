@@ -1,14 +1,14 @@
 import { ILinkedList, IListNode, ForEachCallback } from 'LinkedList';
 import ListNode from './ListNode';
 
-export default class LinkedArray implements ILinkedList {
-  public firstNode: IListNode = null;
-  public lastNode: IListNode = null;
+export default class LinkedArray <ListType = any> implements ILinkedList<ListType> {
+  public firstNode: IListNode<ListType> = null;
+  public lastNode: IListNode<ListType> = null;
   private nodeCount: number = 0;
 
-  constructor(firstNode?: IListNode, length: number = 0) {
+  constructor(firstValue?: ListType, length: number = 0) {
     this.length = length;
-    if (firstNode) this.push(firstNode);
+    if (firstValue) this.push(firstValue);
   }
 
   public get length(): number {
@@ -16,10 +16,17 @@ export default class LinkedArray implements ILinkedList {
   }
 
   public set length(value: number) {
+    if (value < 0) return;
+
+    if (value === 0) {
+      this.firstNode = null;
+      this.lastNode = null;
+    }
+
     if (value < this.length) {
       const removeRightPartOfArray = (node: IListNode, index: number) => {
         if (index === value) {
-          this.lastNode = node.removeFromRight();
+          this.lastNode = node.removeFromLeft();
         }
       };
 
@@ -36,7 +43,7 @@ export default class LinkedArray implements ILinkedList {
   }
 
   public forEach(
-    callback: ForEachCallback,
+    callback: ForEachCallback<ListType>,
     startFromFirstNode: boolean = true
   ): void {
     let node = startFromFirstNode ? this.firstNode : this.lastNode;
@@ -55,52 +62,58 @@ export default class LinkedArray implements ILinkedList {
     }
   }
 
-  public push(value: any): void {
-    if (this.firstNode == null) {
-      const newNode = new ListNode(value);
-      this.firstNode = newNode;
-      this.lastNode = newNode;
-      this.nodeCount++;
+  private addFirstNode(value: ListType): void {
+    const newNode = new ListNode(value);
+    this.firstNode = newNode;
+    this.lastNode = newNode;
+    this.nodeCount++;
+  }
 
-      return;
-    }
+  public push(value: ListType): void {
+    if (this.firstNode == null) return this.addFirstNode(value);
 
     this.lastNode = this.lastNode.insertNext(value);
     this.nodeCount++;
   }
 
-  public pop(): IListNode {
+  public pop(): IListNode<ListType> {
     if (this.length < 1) return;
     this.nodeCount--;
 
     const deletedNode = this.lastNode;
-    this.lastNode = this.lastNode.remove();
+    this.lastNode = this.lastNode.removeFromLeft();
 
     return deletedNode;
   }
 
-  public unshift() {}
+  public unshift(value: ListType): void {
+    if (this.firstNode == null) return this.addFirstNode(value);
 
-  public shift() {}
-
-  public toString(): string {
-    let result = '[';
-    const length = this.length - 1;
-
-    const getStringValue = ({ value }, index: number) => {
-      result =
-        length === index ? `${(result += value)}` : `${(result += value)}, `;
-    };
-
-    this.forEach(getStringValue);
-
-    return (result += ']');
+    this.firstNode = this.firstNode.insertPrevious(value);
+    this.nodeCount++;
   }
 
-  public toJSON(): Array<any> {
+  public shift(): IListNode<ListType> {
+    if (this.length < 1) return;
+    this.nodeCount--;
+
+    const deletedNode = this.firstNode;
+    this.firstNode = this.firstNode.removeFromRight();
+
+    return deletedNode;
+  }
+
+  public toArray(): Array<ListType> {
     let result = [];
 
-    const parseToArray = ({ value }) => result.push(value);
+    const parseToArray = ({ value }: IListNode) => {
+      if (value && value.toArray) {
+        result.push(value.toArray());
+      } else {
+        result.push(value);
+      }
+    };
+    
     this.forEach(parseToArray);
 
     return result;
