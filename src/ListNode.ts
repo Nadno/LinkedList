@@ -1,4 +1,4 @@
-import { IListNode } from "LinkedList";
+import { IListNode } from 'LinkedList';
 
 export default class ListNode implements IListNode {
   constructor(
@@ -13,7 +13,7 @@ export default class ListNode implements IListNode {
     return newNode;
   }
 
-  public remove(): any {
+  public remove(): IListNode {
     const { next, prev } = this;
 
     const isBetweenNodes = next && prev;
@@ -25,14 +25,22 @@ export default class ListNode implements IListNode {
 
     const isFirstNode = !!next;
     if (isFirstNode) {
-      next.prev = null;
-      return next;
+      return this.removeFromLeft();
     }
 
     const isLastNode = !!prev;
     if (isLastNode) {
-      prev.next = null;
-      return prev;
+      return this.removeFromRight();
     }
+  }
+
+  public removeFromRight(): IListNode {
+    this.prev.next = null;
+    return this.prev;
+  }
+
+  public removeFromLeft(): IListNode {
+    this.next.prev = null;
+    return this.next;
   }
 }
