@@ -16,50 +16,62 @@ export default class LinkedArray implements ILinkedList {
   }
 
   public set length(value: number) {
-    const newLength = value - this.length;
-    if (value > newLength) {
-      let newIndexes = 0;
-
-      this.forEach(node => {
-        if (node.next == null && newIndexes < newLength) {
-          node.insertNext(null);
-          newIndexes++;
+    if (value < this.length) {
+      const removeRightPartOfArray = (node: IListNode, index: number) => {
+        if (index === value) {
+          this.lastNode = node.removeFromRight();
         }
-      });
-    } else if (value < newLength) {
+      };
+
+      this.forEach(removeRightPartOfArray);
+    } else if (value > this.length) {
+      const newLength = value - this.length;
+
+      for (let newIndexes = 0; newIndexes < newLength; newIndexes++) {
+        this.lastNode = this.lastNode.insertNext(null);
+      }
     }
 
     this.nodeCount = value;
   }
 
-  public forEach(callback: ForEachCallback): void {
-    let node = this.firstNode;
-    let index = 0;
+  public forEach(
+    callback: ForEachCallback,
+    startFromFirstNode: boolean = true
+  ): void {
+    let node = startFromFirstNode ? this.firstNode : this.lastNode;
+    let index = startFromFirstNode ? 0 : this.length;
 
     while (node != null) {
       callback(node, index);
 
-      node = node.next;
-      index++;
+      if (startFromFirstNode) {
+        node = node.next;
+        index++;
+      } else {
+        node = node.prev;
+        index--;
+      }
     }
   }
 
   public push(value: any): void {
-    this.length++;
-
     if (this.firstNode == null) {
       const newNode = new ListNode(value);
       this.firstNode = newNode;
       this.lastNode = newNode;
+      this.nodeCount++;
+
       return;
     }
 
     this.lastNode = this.lastNode.insertNext(value);
+    this.nodeCount++;
   }
 
   public pop(): IListNode {
     if (this.length < 1) return;
-    this.length--;
+    this.nodeCount--;
 
     const deletedNode = this.lastNode;
     this.lastNode = this.lastNode.remove();
@@ -88,8 +100,8 @@ export default class LinkedArray implements ILinkedList {
   public toJSON(): Array<any> {
     let result = [];
 
-    const getStringValue = ({ value }) => result.push(value);
-    this.forEach(getStringValue);
+    const parseToArray = ({ value }) => result.push(value);
+    this.forEach(parseToArray);
 
     return result;
   }
