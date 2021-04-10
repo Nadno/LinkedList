@@ -5,7 +5,7 @@ declare module "LinkedList" {
     lastNode: IListNode;
     length: number;
 
-    forEach(callback: ForEachCallback): void;
+    forEach(callback: ForEachCallback, startFromFirstNode: boolean): void;
     push(value: any): void;
     pop(): any;
     unshift(value: any): void;
@@ -21,5 +21,7 @@ declare module "LinkedList" {
 
     insertNext(value: any): IListNode;
     remove(): IListNode;
+    removeFromRight(): IListNode;
+    removeFromLeft(): IListNode;
   }
 }
