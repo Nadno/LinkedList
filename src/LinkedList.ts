@@ -1,7 +1,8 @@
 import { ILinkedList, IListNode, ForEachCallback } from 'LinkedList';
 import ListNode from './ListNode';
 
-export default class LinkedArray <ListType = any> implements ILinkedList<ListType> {
+export default class LinkedArray<ListType = any>
+  implements ILinkedList<ListType> {
   public firstNode: IListNode<ListType> = null;
   public lastNode: IListNode<ListType> = null;
   private nodeCount: number = 0;
@@ -30,7 +31,9 @@ export default class LinkedArray <ListType = any> implements ILinkedList<ListTyp
         }
       };
 
-      this.forEach(removeRightPartOfArray);
+      this.forEach(removeRightPartOfArray, {
+        to: value,
+      });
     } else if (value > this.length) {
       const newLength = value - this.length;
 
@@ -44,21 +47,60 @@ export default class LinkedArray <ListType = any> implements ILinkedList<ListTyp
 
   public forEach(
     callback: ForEachCallback<ListType>,
-    startFromFirstNode: boolean = true
+    { fromFirstNode = true, toNode = this.length - 1 }: any
   ): void {
-    let node = startFromFirstNode ? this.firstNode : this.lastNode;
-    let index = startFromFirstNode ? 0 : this.length;
+    let node = fromFirstNode ? this.firstNode : this.lastNode;
+    let index = fromFirstNode ? 0 : this.length - 1,
+      nodeCount = 0;
 
-    while (node != null) {
+    while (node != null && nodeCount <= toNode) {
       callback(node, index);
 
-      if (startFromFirstNode) {
+      if (fromFirstNode) {
         node = node.next;
         index++;
       } else {
         node = node.prev;
         index--;
       }
+
+      nodeCount++;
+    }
+  }
+
+  public at(index: number): IListNode<ListType> {
+    const listLength = this.length - 1;
+    if (Math.abs(index) > listLength) return undefined;
+
+    const options: any = {
+      toNode: index,
+    };
+
+    if (index < 0) {
+      Object.assign(options, {
+        fromFirstNode: false,
+        toNode: Math.abs(index),
+      });
+
+      index = listLength + index;
+    }
+
+    let result = undefined;
+
+    this.forEach((node, current) => {
+      if (index === current) {
+        result = node;
+      }
+    }, options);
+
+    return result;
+  }
+
+  public valueAt(index: number): ListType {
+    try {
+      return this.at(index).value;
+    } catch (err) {
+      console.error(err);
     }
   }
 
@@ -103,7 +145,7 @@ export default class LinkedArray <ListType = any> implements ILinkedList<ListTyp
     return deletedNode;
   }
 
-  public toArray(): Array<ListType> {
+  public toArray(reversed: boolean = false): Array<ListType> {
     let result = [];
 
     const parseToArray = ({ value }: IListNode) => {
@@ -113,8 +155,8 @@ export default class LinkedArray <ListType = any> implements ILinkedList<ListTyp
         result.push(value);
       }
     };
-    
-    this.forEach(parseToArray);
+
+    this.forEach(parseToArray, { fromFirstNode: !reversed });
 
     return result;
   }
