@@ -1,4 +1,9 @@
-import { ILinkedList, IListNode, ForEachCallback } from 'LinkedList';
+import {
+  ILinkedList,
+  IListNode,
+  ForEachCallback,
+  CheckMinNode,
+} from 'LinkedList';
 import ListNode from './ListNode';
 
 export default class LinkedArray<ListType = any>
@@ -45,10 +50,43 @@ export default class LinkedArray<ListType = any>
     this.nodeCount = value;
   }
 
-  public forEach(
-    callback: ForEachCallback<ListType>,
-    { fromFirstNode = true, toNode = this.length - 1 }: any
-  ): void {
+  public sort(cb?: CheckMinNode<ListType>) {
+    try {
+      let checkMinNode: CheckMinNode<ListType>;
+
+      if (typeof cb != 'function') {
+        checkMinNode = (swap, current) => swap > current;
+      } else {
+        checkMinNode = cb;
+      }
+
+      const selectionSort: ForEachCallback<ListType> = node => {
+        let swap = node,
+          current = node;
+
+        while (current) {
+          if (checkMinNode(swap.value, current.value)) {
+            swap = current;
+          }
+
+          if (checkMinNode(node.value, swap.value)) {
+            const aux = node.value;
+            node.value = swap.value;
+            swap.value = aux;
+          }
+
+          current = current.next;
+        }
+      };
+
+      this.forEach(selectionSort);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  public forEach(callback: ForEachCallback<ListType>, options = {}): void {
+    const { fromFirstNode = true, toNode = this.length - 1 }: any = options;
     let node = fromFirstNode ? this.firstNode : this.lastNode;
     let index = fromFirstNode ? 0 : this.length - 1,
       nodeCount = 0;
