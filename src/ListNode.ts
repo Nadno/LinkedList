@@ -27,12 +27,12 @@ export default class ListNode<NodeType = any> implements IListNode<NodeType> {
     return this;
   }
 
-  public removeFromRight(): IListNode<NodeType> {
+  public removeNext(): IListNode<NodeType> {
     this.next.prev = null;
     return this.next;
   }
 
-  public removeFromLeft(): IListNode<NodeType> {
+  public removePrevious(): IListNode<NodeType> {
     this.prev.next = null;
     return this.prev;
   }
