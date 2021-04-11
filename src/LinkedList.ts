@@ -27,7 +27,7 @@ export default class LinkedArray<ListType = any>
     if (value < this.length) {
       const removeRightPartOfArray = (node: IListNode, index: number) => {
         if (index === value) {
-          this.lastNode = node.removeFromLeft();
+          this.lastNode = node.removePrevious();
         }
       };
 
@@ -68,9 +68,16 @@ export default class LinkedArray<ListType = any>
     }
   }
 
-  public at(index: number): IListNode<ListType> {
+  public at(index: number): IListNode<ListType> | undefined {
     const listLength = this.length - 1;
     if (Math.abs(index) > listLength) return undefined;
+
+    const isNegativeZero = Object.is(index, -0);
+    if (isNegativeZero) {
+      return this.lastNode;
+    } else if (index === 0) {
+      return this.firstNode;
+    }
 
     const options: any = {
       toNode: index,
@@ -96,11 +103,13 @@ export default class LinkedArray<ListType = any>
     return result;
   }
 
-  public valueAt(index: number): ListType {
+  public valueAt(index: number): ListType | undefined {
     try {
-      return this.at(index).value;
+      const node = this.at(index);
+      return node ? node.value : undefined;
     } catch (err) {
       console.error(err);
+      return undefined;
     }
   }
 
@@ -111,11 +120,16 @@ export default class LinkedArray<ListType = any>
     this.nodeCount++;
   }
 
-  public push(value: ListType): void {
-    if (this.firstNode == null) return this.addFirstNode(value);
+  public push(...values: ListType[]): void {
+    for (let value of values) {
+      if (this.firstNode == null) {
+        this.addFirstNode(value);
+        continue;
+      }
 
-    this.lastNode = this.lastNode.insertNext(value);
-    this.nodeCount++;
+      this.lastNode = this.lastNode.insertNext(value);
+      this.nodeCount++;
+    }
   }
 
   public pop(): IListNode<ListType> {
@@ -123,16 +137,21 @@ export default class LinkedArray<ListType = any>
     this.nodeCount--;
 
     const deletedNode = this.lastNode;
-    this.lastNode = this.lastNode.removeFromLeft();
+    this.lastNode = this.lastNode.removePrevious();
 
     return deletedNode;
   }
 
-  public unshift(value: ListType): void {
-    if (this.firstNode == null) return this.addFirstNode(value);
+  public unshift(...values: ListType[]): void {
+    for (let value of values) {
+      if (this.firstNode == null) {
+        this.addFirstNode(value);
+        continue;
+      }
 
-    this.firstNode = this.firstNode.insertPrevious(value);
-    this.nodeCount++;
+      this.firstNode = this.firstNode.insertPrevious(value);
+      this.nodeCount++;
+    }
   }
 
   public shift(): IListNode<ListType> {
@@ -140,7 +159,7 @@ export default class LinkedArray<ListType = any>
     this.nodeCount--;
 
     const deletedNode = this.firstNode;
-    this.firstNode = this.firstNode.removeFromRight();
+    this.firstNode = this.firstNode.removeNext();
 
     return deletedNode;
   }
