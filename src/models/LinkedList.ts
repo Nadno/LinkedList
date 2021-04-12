@@ -2,7 +2,7 @@ import {
   ILinkedList,
   IListNode,
   ForEachCallback,
-  CheckMinNode,
+  SortFunction,
 } from 'LinkedList';
 import ListNode from './ListNode';
 
@@ -50,14 +50,10 @@ export default class LinkedArray<ListType = any>
     this.nodeCount = value;
   }
 
-  public sort(cb?: CheckMinNode<ListType>) {
+  public sort(sort?: SortFunction<ListType>): void {
     try {
-      let checkMinNode: CheckMinNode<ListType>;
-
-      if (typeof cb != 'function') {
-        checkMinNode = (swap, current) => swap > current;
-      } else {
-        checkMinNode = cb;
+      if (typeof sort != 'function') {
+        sort = (swap, current) => swap > current;
       }
 
       const selectionSort: ForEachCallback<ListType> = node => {
@@ -65,11 +61,11 @@ export default class LinkedArray<ListType = any>
           current = node;
 
         while (current) {
-          if (checkMinNode(swap.value, current.value)) {
+          if (sort(swap.value, current.value)) {
             swap = current;
           }
 
-          if (checkMinNode(node.value, swap.value)) {
+          if (sort(node.value, swap.value)) {
             const aux = node.value;
             node.value = swap.value;
             swap.value = aux;
@@ -108,7 +104,10 @@ export default class LinkedArray<ListType = any>
 
   public at(index: number): IListNode<ListType> | undefined {
     const listLength = this.length - 1;
-    if (Math.abs(index) > listLength) return undefined;
+    if (Math.abs(index) > listLength || !Number.isInteger(index))
+      throw new Error(
+        'The index number is bigger than list length or is not a integer value.'
+      );
 
     const isNegativeZero = Object.is(index, -0);
     if (isNegativeZero) {
@@ -158,16 +157,33 @@ export default class LinkedArray<ListType = any>
     this.nodeCount++;
   }
 
-  public push(...values: ListType[]): void {
-    for (let value of values) {
-      if (this.firstNode == null) {
-        this.addFirstNode(value);
-        continue;
-      }
+  private insert(cb: (value: ListType) => void, values: ListType[]): void {
+    const length = values.length;
+    let index = 0;
 
-      this.lastNode = this.lastNode.insertNext(value);
+    if (this.firstNode == null) {
+      this.addFirstNode(values[0]);
+      index++;
+    }
+
+    for (; index < length; index++) {
+      cb(values[index]);
       this.nodeCount++;
     }
+  }
+
+  public insertFrom(from: number, ...values: ListType[]): void {
+    let currentNode = this.at(from);
+
+    this.insert(value => {
+      currentNode = currentNode.insertNext(value, currentNode.next);
+    }, values);
+  }
+
+  public push(...values: ListType[]): void {
+    this.insert(value => {
+      this.lastNode = this.lastNode.insertNext(value);
+    }, values);
   }
 
   public pop(): IListNode<ListType> {
@@ -181,15 +197,9 @@ export default class LinkedArray<ListType = any>
   }
 
   public unshift(...values: ListType[]): void {
-    for (let value of values) {
-      if (this.firstNode == null) {
-        this.addFirstNode(value);
-        continue;
-      }
-
+    this.insert(value => {
       this.firstNode = this.firstNode.insertPrevious(value);
-      this.nodeCount++;
-    }
+    }, values);
   }
 
   public shift(): IListNode<ListType> {
