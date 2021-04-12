@@ -7,14 +7,28 @@ export default class ListNode<NodeType = any> implements IListNode<NodeType> {
     public prev: IListNode<NodeType> = null
   ) {}
 
-  public insertNext(value: NodeType): IListNode<NodeType> {
-    const newNode = new ListNode(value, null, this);
+  public insertNext(
+    value: NodeType,
+    nextNewNode: IListNode<NodeType> = null
+  ): IListNode<NodeType> {
+    const newNode = new ListNode(value, nextNewNode, this);
+    if (nextNewNode) {
+      nextNewNode.prev = newNode;
+    }
+
     this.next = newNode;
     return newNode;
   }
 
-  public insertPrevious(value: NodeType): IListNode<NodeType> {
-    const newNode = new ListNode(value, this);
+  public insertPrevious(
+    value: NodeType,
+    prevNewNode: IListNode<NodeType> = null
+  ): IListNode<NodeType> {
+    const newNode = new ListNode(value, this, prevNewNode);
+    if (prevNewNode) {
+      prevNewNode.next = newNode;
+    }
+
     this.prev = newNode;
     return newNode;
   }
