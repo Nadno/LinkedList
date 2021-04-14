@@ -7,37 +7,26 @@ export default class LinkedArray<ListType = any>
   public start: IListNode<ListType> | null = null;
   public end: IListNode<ListType> | null = null;
 
-  public get length(): number {
-    return this.nodeCount;
+  protected _start: IListNode<ListType> | null = null;
+  protected _end: IListNode<ListType> | null = null;
+  protected _length: number = 0;
+  protected _maxLength: number | null = null;
+
+  constructor(...values: ListType[]);
+  constructor(value?: number);
+  constructor(value?: any, ...params: ListType[]) {
+    if (!params.length && Number.isInteger(value)) {
+      this._maxLength = value as number;
+      return;
+    }
+
+    if (params.length) {
+      this.push(value, ...params);
+    }
   }
 
-  public set length(value: number) {
-    if (value < 0) return;
-
-    if (value === 0) {
-      this.firstNode = null;
-      this.lastNode = null;
-    }
-
-    if (value < this.length) {
-      const removeRightPartOfArray = (node: IListNode, index: number) => {
-        if (index === value) {
-          this.lastNode = node.removePrevious();
-        }
-      };
-
-      this.forEach(removeRightPartOfArray, {
-        to: value,
-      });
-    } else if (value > this.length) {
-      const newLength = value - this.length;
-
-      for (let newIndexes = 0; newIndexes < newLength; newIndexes++) {
-        this.lastNode = this.lastNode.insertNext(null);
-      }
-    }
-
-    this.nodeCount = value;
+  public get length(): number {
+    return this._length;
   }
 
   public set length(value: number) {
@@ -119,7 +108,7 @@ export default class LinkedArray<ListType = any>
 
     if (index < 0) {
       Object.assign(options, {
-        fromstart: false,
+        fromStart: false,
         toNode: Math.abs(index),
       });
 
@@ -147,7 +136,7 @@ export default class LinkedArray<ListType = any>
     }
   }
 
-  private addstart(value: ListType): void {
+  private addFirstNode(value: ListType): void {
     const newNode = new ListNode(value);
     this.start = newNode;
     this.end = newNode;
@@ -158,11 +147,16 @@ export default class LinkedArray<ListType = any>
     cb: (value: ListType, values: ListType[]) => void,
     values: ListType[]
   ): void {
-    const length = values.length;
+    let length = values.length;
     let index = 0;
 
+    if (this._maxLength && this.length + length > this._maxLength) {
+      const cantInsert = this.length + length - this._maxLength;
+      length = length - cantInsert;
+    }
+
     if (this.start == null) {
-      this.addstart(values[0]);
+      this.addFirstNode(values[0]);
       index++;
     }
 
@@ -185,8 +179,8 @@ export default class LinkedArray<ListType = any>
           break;
         }
 
-        const isend = node.next == null;
-        if (isend) {
+        const isLastNode = node.next == null;
+        if (isLastNode) {
           node.insertNext(value, node.next as IListNode<ListType>);
           break;
         }
@@ -229,7 +223,7 @@ export default class LinkedArray<ListType = any>
 
     try {
       if (this.start == null) {
-        this.addstart(values[index]);
+        this.addFirstNode(values[index]);
         index--;
       }
 
@@ -266,7 +260,7 @@ export default class LinkedArray<ListType = any>
       }
     };
 
-    this.forEach(parseToArray, { fromstart: !reversed });
+    this.forEach(parseToArray, { fromStart: !reversed });
 
     return result;
   }
