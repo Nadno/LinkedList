@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "strict": true,
+    "allowJs": true,
+    "target": "ES2017"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "src/tests"]
+}
