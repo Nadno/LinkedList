@@ -1,21 +1,11 @@
-import {
-  ILinkedList,
-  IListNode,
-  ForEachCallback,
-  SortFunction,
-} from 'LinkedList';
+import { ForEachCallback, ILinkedList, IListNode, SortFunction } from './types';
+
 import ListNode from './ListNode';
 
 export default class LinkedArray<ListType = any>
   implements ILinkedList<ListType> {
-  public firstNode: IListNode<ListType> = null;
-  public lastNode: IListNode<ListType> = null;
-  private nodeCount: number = 0;
-
-  constructor(firstValue?: ListType, length: number = 0) {
-    this.length = length;
-    if (firstValue) this.push(firstValue);
-  }
+  public start: IListNode<ListType> | null = null;
+  public end: IListNode<ListType> | null = null;
 
   public get length(): number {
     return this.nodeCount;
@@ -50,22 +40,29 @@ export default class LinkedArray<ListType = any>
     this.nodeCount = value;
   }
 
-  public sort(sort?: SortFunction<ListType>): void {
+  public set length(value: number) {
+    throw new Error("You can't assign a value to length property");
+  }
+
+  public sort(cb?: SortFunction<ListType>): void {
+    let sortCb: SortFunction<ListType>;
     try {
-      if (typeof sort != 'function') {
-        sort = (swap, current) => swap > current;
+      if (!cb || typeof cb != 'function') {
+        sortCb = (swap, current) => swap > current;
+      } else {
+        sortCb = cb;
       }
 
       const selectionSort: ForEachCallback<ListType> = node => {
         let swap = node,
-          current = node;
+          current: IListNode<ListType> | null = node;
 
         while (current) {
-          if (sort(swap.value, current.value)) {
+          if (sortCb(swap.value, current.value)) {
             swap = current;
           }
 
-          if (sort(node.value, swap.value)) {
+          if (sortCb(node.value, swap.value)) {
             const aux = node.value;
             node.value = swap.value;
             swap.value = aux;
@@ -82,15 +79,15 @@ export default class LinkedArray<ListType = any>
   }
 
   public forEach(callback: ForEachCallback<ListType>, options = {}): void {
-    const { fromFirstNode = true, toNode = this.length - 1 }: any = options;
-    let node = fromFirstNode ? this.firstNode : this.lastNode;
-    let index = fromFirstNode ? 0 : this.length - 1,
+    const { fromStart = true, toNode = this.length - 1 }: any = options;
+    let node = fromStart ? this.start : this.end;
+    let index = fromStart ? 0 : this.length - 1,
       nodeCount = 0;
 
     while (node != null && nodeCount <= toNode) {
       callback(node, index);
 
-      if (fromFirstNode) {
+      if (fromStart) {
         node = node.next;
         index++;
       } else {
@@ -102,7 +99,7 @@ export default class LinkedArray<ListType = any>
     }
   }
 
-  public at(index: number): IListNode<ListType> | undefined {
+  public at(index: number): IListNode<ListType> | null | undefined {
     const listLength = this.length - 1;
     if (Math.abs(index) > listLength || !Number.isInteger(index))
       throw new Error(
@@ -111,9 +108,9 @@ export default class LinkedArray<ListType = any>
 
     const isNegativeZero = Object.is(index, -0);
     if (isNegativeZero) {
-      return this.lastNode;
+      return this.end;
     } else if (index === 0) {
-      return this.firstNode;
+      return this.start;
     }
 
     const options: any = {
@@ -122,7 +119,7 @@ export default class LinkedArray<ListType = any>
 
     if (index < 0) {
       Object.assign(options, {
-        fromFirstNode: false,
+        fromstart: false,
         toNode: Math.abs(index),
       });
 
@@ -140,7 +137,7 @@ export default class LinkedArray<ListType = any>
     return result;
   }
 
-  public valueAt(index: number): ListType | undefined {
+  public valueAt(index: number): ListType | null | undefined {
     try {
       const node = this.at(index);
       return node ? node.value : undefined;
@@ -150,70 +147,116 @@ export default class LinkedArray<ListType = any>
     }
   }
 
-  private addFirstNode(value: ListType): void {
+  private addstart(value: ListType): void {
     const newNode = new ListNode(value);
-    this.firstNode = newNode;
-    this.lastNode = newNode;
-    this.nodeCount++;
+    this.start = newNode;
+    this.end = newNode;
+    this._length++;
   }
 
-  private insert(cb: (value: ListType) => void, values: ListType[]): void {
+  private forEachInsert(
+    cb: (value: ListType, values: ListType[]) => void,
+    values: ListType[]
+  ): void {
     const length = values.length;
     let index = 0;
 
-    if (this.firstNode == null) {
-      this.addFirstNode(values[0]);
+    if (this.start == null) {
+      this.addstart(values[0]);
       index++;
     }
 
     for (; index < length; index++) {
-      cb(values[index]);
-      this.nodeCount++;
+      cb(values[index], values);
+      this._length++;
     }
   }
 
-  public insertFrom(from: number, ...values: ListType[]): void {
-    let currentNode = this.at(from);
+  public insertSort(sort: SortFunction<ListType>, ...values: ListType[]): void {
+    this.forEachInsert(value => {
+      let node = this.start;
+      while (node != null) {
+        if (sort(value, node.value)) {
+          if (node === this.start) {
+            this.unshift(value);
+          } else {
+            node.insertPrevious(value, node.prev as IListNode<ListType>);
+          }
+          break;
+        }
 
-    this.insert(value => {
+        const isend = node.next == null;
+        if (isend) {
+          node.insertNext(value, node.next as IListNode<ListType>);
+          break;
+        }
+
+        node = node.next;
+      }
+    }, values);
+  }
+
+  public insertFrom(from: number, ...values: ListType[]): void {
+    let currentNode = this.at(from) as IListNode<ListType>;
+    if (currentNode == null) return;
+
+    this.forEachInsert(value => {
       currentNode = currentNode.insertNext(value, currentNode.next);
     }, values);
   }
 
   public push(...values: ListType[]): void {
-    this.insert(value => {
-      this.lastNode = this.lastNode.insertNext(value);
-    }, values);
+    const pushValue = (value: ListType) => {
+      this.end = (this.end as IListNode<ListType>).insertNext(value);
+    };
+
+    this.forEachInsert(pushValue, values);
   }
 
-  public pop(): IListNode<ListType> {
-    if (this.length < 1) return;
-    this.nodeCount--;
+  public pop(): IListNode<ListType> | undefined {
+    if (this.length < 1) return undefined;
+    this._length--;
 
-    const deletedNode = this.lastNode;
-    this.lastNode = this.lastNode.removePrevious();
+    const deletedNode = this.end as IListNode<ListType>;
+    this.end = (this.end as IListNode<ListType>).removePrevious();
 
     return deletedNode;
   }
 
   public unshift(...values: ListType[]): void {
-    this.insert(value => {
-      this.firstNode = this.firstNode.insertPrevious(value);
-    }, values);
+    const to = 0;
+    let index = values.length - 1;
+
+    try {
+      if (this.start == null) {
+        this.addstart(values[index]);
+        index--;
+      }
+
+      while (index >= to) {
+        this.start = (this.start as IListNode<ListType>).insertPrevious(
+          values[index]
+        );
+        this._length++;
+        index--;
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }
 
-  public shift(): IListNode<ListType> {
-    if (this.length < 1) return;
-    this.nodeCount--;
+  public shift(): IListNode<ListType> | undefined {
+    if (this.length < 1) return undefined;
+    this._length--;
 
-    const deletedNode = this.firstNode;
-    this.firstNode = this.firstNode.removeNext();
+    const deletedNode = this.start as IListNode<ListType>;
+    this.start = (this.start as IListNode<ListType>).removeNext();
 
     return deletedNode;
   }
 
-  public toArray(reversed: boolean = false): Array<ListType> {
-    let result = [];
+  public toArray(reversed: boolean = false): ListType[] {
+    let result: ListType[] = [];
 
     const parseToArray = ({ value }: IListNode) => {
       if (value && value.toArray) {
@@ -223,7 +266,7 @@ export default class LinkedArray<ListType = any>
       }
     };
 
-    this.forEach(parseToArray, { fromFirstNode: !reversed });
+    this.forEach(parseToArray, { fromstart: !reversed });
 
     return result;
   }
