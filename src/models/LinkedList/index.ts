@@ -1,20 +1,30 @@
 import { ForEachCallback, ILinkedList, IListNode, SortFunction } from './types';
 
-import ListNode from './ListNode';
+import ListNode, { BorderNode } from './ListNode';
 
 export default class LinkedArray<ListType = any>
   implements ILinkedList<ListType> {
   public start: IListNode<ListType> | null = null;
   public end: IListNode<ListType> | null = null;
 
-  protected _start: IListNode<ListType> | null = null;
-  protected _end: IListNode<ListType> | null = null;
+  protected _start: BorderNode<ListType> | null = null;
+  protected _end: BorderNode<ListType> | null = null;
   protected _length: number = 0;
   protected _maxLength: number | null = null;
+
+  public reversed: any = {
+    _reverse: true,
+  };
 
   constructor(...values: ListType[]);
   constructor(value?: number);
   constructor(value?: any, ...params: ListType[]) {
+    this.getNode = this.getNode.bind(this);
+    Object.assign(this.reversed, {
+      [Symbol.iterator]: this[Symbol.iterator],
+      getNode: this.getNode,
+    });
+
     if (!params.length && Number.isInteger(value)) {
       this._maxLength = value as number;
       return;
@@ -25,11 +35,33 @@ export default class LinkedArray<ListType = any>
     }
   }
 
+  private getNode(name: 'start' | 'end'): IListNode<ListType> | null {
+    return this[name];
+  }
+
+  protected *[Symbol.iterator](this: any) {
+    let node: IListNode<ListType> | null;
+
+    let next: 'next' | 'prev';
+    if (this._reverse) {
+      next = 'prev';
+      node = this.getNode('end');
+    } else {
+      next = 'next';
+      node = this.start;
+    }
+
+    while (node != null) {
+      yield node.value;
+      node = node[next];
+    }
+  }
+
   public get length(): number {
     return this._length;
   }
 
-  public set length(value: number) {
+  public set length(_: number) {
     throw new Error("You can't assign a value to length property");
   }
 
