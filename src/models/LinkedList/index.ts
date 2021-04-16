@@ -116,6 +116,16 @@ export default class LinkedList<ListType = any>
     return this;
   }
 
+  private useReversedListIf(condition: boolean, cb: Function) {
+    if (condition) {
+      this._reversed = !this._reversed;
+      cb();
+      this._reversed = !this._reversed;
+    } else {
+      cb();
+    }
+  }
+
   public forEach<result = IListNode<ListType>>(
     callback: (value: result, index: number) => void,
     options: ForEachOptions = {}
@@ -126,35 +136,29 @@ export default class LinkedList<ListType = any>
       toNode = this.length - 1,
     }: ForEachOptions = options;
 
-    if (reversed) {
-      this._reversed = !this._reversed;
-    }
+    this.useReversedListIf(reversed, () => {
+      const next = this._reversed ? 'prev' : 'next';
+      const getResult = includeNodes
+        ? (node: IListNode<ListType>) => node
+        : (node: IListNode<ListType>) => node.value;
 
-    const next = this._reversed ? 'prev' : 'next';
-    const getResult = includeNodes
-      ? (node: IListNode<ListType>) => node
-      : (node: IListNode<ListType>) => node.value;
+      let index = reversed ? this.length - 1 : 0;
+      let node = this.start,
+        nodeCount = 0;
 
-    let index = reversed ? this.length - 1 : 0;
-    let node = this.start,
-      nodeCount = 0;
+      while (node && nodeCount <= toNode) {
+        callback((getResult(node) as unknown) as result, index);
 
-    while (node && nodeCount <= toNode) {
-      callback((getResult(node) as unknown) as result, index);
+        if (reversed) {
+          index--;
+        } else {
+          index++;
+        }
 
-      if (reversed) {
-        index--;
-      } else {
-        index++;
+        node = node[next];
+        nodeCount++;
       }
-
-      node = node[next];
-      nodeCount++;
-    }
-
-    if (reversed) {
-      this._reversed = !this._reversed;
-    }
+    });
   }
 
   public at(index: number): IListNode<ListType> | null | undefined {
