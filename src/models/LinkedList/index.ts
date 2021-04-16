@@ -4,7 +4,9 @@ export default class LinkedList<ListType = any>
   implements ILinkedList<ListType> {
   protected _length = 0;
   protected _maxLength: number | null = null;
-  protected _reversed: boolean = false;
+
+  protected _reversed = false;
+  protected _reversedInOperation = false;
 
   protected _start: IListNode<ListType> | null = null;
   protected _end: IListNode<ListType> | null = null;
@@ -116,13 +118,17 @@ export default class LinkedList<ListType = any>
     return this;
   }
 
-  private useReversedListIf(condition: boolean, cb: Function) {
-    if (condition) {
+  private useReversedListIf(condition: boolean, operation: Function) {
+    if (condition && !this._reversedInOperation) {
+      this._reversedInOperation = !this._reversedInOperation;
       this._reversed = !this._reversed;
-      cb();
+
+      operation();
+
       this._reversed = !this._reversed;
+      this._reversedInOperation = !this._reversedInOperation;
     } else {
-      cb();
+      operation();
     }
   }
 
@@ -157,6 +163,47 @@ export default class LinkedList<ListType = any>
 
         node = node[next];
         nodeCount++;
+      }
+    });
+  }
+
+  public forEachAt(
+    cb: (node: IListNode<ListType>) => void,
+    indexes: number[]
+  ): void {
+    {
+      const maxIndex = this.length - 1;
+      while (indexes[indexes.length - 1] > maxIndex) {
+        indexes.pop();
+      }
+
+      if (!indexes.length) return;
+    }
+
+    let currentIndexToFind = 0,
+      currentIndex = Math.abs(indexes[currentIndexToFind]);
+
+    const node = this.at(indexes[currentIndexToFind]);
+    if (!node) return;
+
+    cb(node);
+    currentIndexToFind++;
+
+    let current: IListNode<ListType> | null = node;
+    const isNegativeInteger = indexes[currentIndexToFind] < 0;
+
+    this.useReversedListIf(isNegativeInteger, () => {
+      const next = this._reversed ? 'prev' : 'next';
+      const maxIndex = Math.abs(indexes[indexes.length - 1]);
+
+      while (current && currentIndex <= maxIndex) {
+        if (currentIndex === Math.abs(indexes[currentIndexToFind])) {
+          cb(current);
+          currentIndexToFind++;
+        }
+
+        current = current[next];
+        currentIndex++;
       }
     });
   }
