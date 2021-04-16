@@ -1,14 +1,13 @@
 import { ForEachOptions, ILinkedList, IListNode, SortFunction } from './types';
-
 import ListNode from './ListNode';
-
-export default class LinkedArray<ListType = any>
+export default class LinkedList<ListType = any>
   implements ILinkedList<ListType> {
-  protected _start: IListNode<ListType> | null = null;
-  protected _end: IListNode<ListType> | null = null;
-  protected _length: number = 0;
+  protected _length = 0;
   protected _maxLength: number | null = null;
   protected _reversed: boolean = false;
+
+  protected _start: IListNode<ListType> | null = null;
+  protected _end: IListNode<ListType> | null = null;
 
   /**
    * @param values can be a many values to be assigned to the list or
@@ -41,16 +40,16 @@ export default class LinkedArray<ListType = any>
     return this._reversed ? this._end : this._start;
   }
 
-  public set start(value: IListNode<ListType> | null) {
-    this._start = value;
+  public set start(_: IListNode<ListType> | null) {
+    throw new Error("You can't change the first value");
   }
 
   public get end(): IListNode<ListType> | null {
     return this._reversed ? this._start : this._end;
   }
 
-  public set end(value: IListNode<ListType> | null) {
-    this._end = value;
+  public set end(_: IListNode<ListType> | null) {
+    throw new Error("You can't change the last value");
   }
 
   public get length(): number {
@@ -98,7 +97,20 @@ export default class LinkedArray<ListType = any>
     return this;
   }
 
+  /**
+   * @method reverse does not mutate the list, it just change the direction of
+   * the iteration, so the operations like pop, push, shift, forEach, for...of
+   * work as the list were reversed, but its only abstract.
+   */
   public reverse(): this {
+    const { push, pop, unshift, shift } = this;
+
+    this.pop = shift;
+    this.shift = pop;
+
+    this.push = unshift;
+    this.unshift = push;
+
     this._reversed = !this._reversed;
 
     return this;
@@ -201,8 +213,8 @@ export default class LinkedArray<ListType = any>
 
   private addFirstNode(value: ListType): void {
     const node = new ListNode(value);
-    this.start = node;
-    this.end = node;
+    this._start = node;
+    this._end = node;
     this._length++;
   }
 
@@ -210,27 +222,47 @@ export default class LinkedArray<ListType = any>
    * This method check if list is empty and for each value, call the insert function param
    * @param values a list of values to insert
    * @param insert a function to insert the values
+   * @param reversed receive true when the insert must be equal to the unshift insert
    */
   private handleInsert(
     values: ListType[],
-    insert: (value: ListType, values: ListType[]) => void
+    insert: (value: ListType, values: ListType[]) => void,
+    reversed: boolean = false
   ): void {
-    let quantity = values.length,
-      finalLength = this.length + quantity;
-    let current = 0;
+    let current = 0,
+      firstValue = 0;
+    let length = values.length;
+    let finalLength = this.length + length;
 
     const exceedMaxLength = !!this._maxLength && finalLength > this._maxLength;
     if (exceedMaxLength) {
       const cantInsert = finalLength - (this._maxLength as number);
-      quantity = quantity - cantInsert;
+      length = length - cantInsert;
     }
 
     if (!this.start) {
-      this.addFirstNode(values[current]);
-      current++;
+      const value = reversed ? values[length - 1] : values[0];
+      this.addFirstNode(value);
+
+      firstValue++;
     }
 
-    for (; current < quantity; current++) {
+    if (!reversed) {
+      const to = length;
+      current += firstValue;
+
+      for (; current < to; current++) {
+        insert(values[current], values);
+        this._length++;
+      }
+
+      return;
+    }
+
+    const to = 0;
+    current = length - 1 - firstValue;
+
+    for (; current >= to; current--) {
       insert(values[current], values);
       this._length++;
     }
@@ -281,51 +313,35 @@ export default class LinkedArray<ListType = any>
   }
 
   public push(...values: ListType[]): this {
-    const pushValue = (value: ListType) => {
-      this.end = (this.end as IListNode<ListType>).insertNext(value);
-    };
+    const IS_TO_UNSHIFT_VALUE = this._reversed;
 
-    this.handleInsert(values, pushValue);
+    const insertValue = (value: ListType) => {
+      this._end = (this._end as IListNode<ListType>).insertNext(value);
+    };
+    this.handleInsert(values, insertValue, IS_TO_UNSHIFT_VALUE);
 
     return this;
   }
 
   public pop(): IListNode<ListType> | undefined {
-    if (!this.end) return undefined;
+    if (!this._end) return undefined;
     this._length--;
 
-    const deletedNode = this.end;
-    this.end = this.end.removePrevious();
+    const deletedNode = this._end;
+    this._end = this._end.removePrevious();
 
     return deletedNode;
   }
 
   public unshift(...values: ListType[]): this {
-    const start = 0;
-    let current = values.length - 1;
+    const IS_TO_PUSH_VALUE = !this._reversed;
+
+    const insertValue = (value: ListType) => {
+      this._start = (this._start as IListNode<ListType>).insertPrevious(value);
+    };
 
     try {
-      const finalLength = this.length + values.length;
-
-      const exceedMaxLength = this._maxLength && finalLength > this._maxLength;
-      if (exceedMaxLength) {
-        const cantInsert = finalLength - (this._maxLength as number);
-        current = current - cantInsert;
-      }
-
-      if (!this.start) {
-        this.addFirstNode(values[current]);
-        current--;
-      }
-
-      while (current >= start) {
-        this.start = (this.start as IListNode<ListType>).insertPrevious(
-          values[current]
-        );
-
-        current--;
-        this._length++;
-      }
+      this.handleInsert(values, insertValue, IS_TO_PUSH_VALUE);
     } catch (err) {
       console.error(err);
     }
@@ -334,11 +350,11 @@ export default class LinkedArray<ListType = any>
   }
 
   public shift(): IListNode<ListType> | undefined {
-    if (!this.start) return undefined;
+    if (!this._start) return undefined;
     this._length--;
 
-    const deletedNode = this.start;
-    this.start = this.start.removeNext();
+    const deletedNode = this._start;
+    this._start = this._start.removeNext();
 
     return deletedNode;
   }
