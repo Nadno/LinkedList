@@ -252,16 +252,6 @@ export default class LinkedList<ListType = any>
     return result;
   }
 
-  public valueAt(index: number): ListType | null | undefined {
-    try {
-      const node = this.at(index);
-      return node ? node.value : undefined;
-    } catch (err) {
-      console.error(err);
-      return undefined;
-    }
-  }
-
   private addFirstNode(value: ListType): void {
     const node = new ListNode(value);
     this._start = node;
@@ -275,13 +265,14 @@ export default class LinkedList<ListType = any>
    * @param insert a function to insert the values
    * @param reversed receive true when the insert must be equal to the unshift insert
    */
-  private handleInsert(
+  private useInsert(
     values: ListType[],
-    insert: (value: ListType, values: ListType[]) => void,
+    insert: (value: ListType) => void,
     reversed: boolean = false
   ): void {
     let current = 0,
-      firstValue = 0;
+      valueAlreadyAdded = 0;
+
     let length = values.length;
     let finalLength = this.length + length;
 
@@ -295,27 +286,24 @@ export default class LinkedList<ListType = any>
       const value = reversed ? values[length - 1] : values[0];
       this.addFirstNode(value);
 
-      firstValue++;
+      valueAlreadyAdded++;
     }
 
-    if (!reversed) {
-      const to = length;
-      current += firstValue;
+    if (reversed) {
+      const to = 0;
+      current = length - 1 - valueAlreadyAdded;
 
-      for (; current < to; current++) {
-        insert(values[current], values);
+      for (; current >= to; current--) {
+        insert(values[current]);
         this._length++;
       }
+    } else {
+      current = current + valueAlreadyAdded;
 
-      return;
-    }
-
-    const to = 0;
-    current = length - 1 - firstValue;
-
-    for (; current >= to; current--) {
-      insert(values[current], values);
-      this._length++;
+      for (; current < length; current++) {
+        insert(values[current]);
+        this._length++;
+      }
     }
   }
 
@@ -346,7 +334,7 @@ export default class LinkedList<ListType = any>
       }
     };
 
-    this.handleInsert(values, insertionSort);
+    this.useInsert(values, insertionSort);
     return this;
   }
 
@@ -358,7 +346,7 @@ export default class LinkedList<ListType = any>
       currentNode = currentNode.insertNext(value, currentNode.next);
     };
 
-    this.handleInsert(values, addValue);
+    this.useInsert(values, addValue);
 
     return this;
   }
@@ -369,7 +357,7 @@ export default class LinkedList<ListType = any>
     const insertValue = (value: ListType) => {
       this._end = (this._end as IListNode<ListType>).insertNext(value);
     };
-    this.handleInsert(values, insertValue, IS_TO_UNSHIFT_VALUE);
+    this.useInsert(values, insertValue, IS_TO_UNSHIFT_VALUE);
 
     return this;
   }
@@ -392,7 +380,7 @@ export default class LinkedList<ListType = any>
     };
 
     try {
-      this.handleInsert(values, insertValue, IS_TO_PUSH_VALUE);
+      this.useInsert(values, insertValue, IS_TO_PUSH_VALUE);
     } catch (err) {
       console.error(err);
     }
