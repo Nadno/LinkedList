@@ -252,6 +252,32 @@ export default class LinkedList<ListType = any>
     return result;
   }
 
+  public nodesAt(...indexes: number[]): IListNode<ListType>[] {
+    const result: IListNode<ListType>[] = [];
+    try {
+      const addNode = (node: IListNode<ListType>) => result.push(node);
+      this.forEachAt(addNode, indexes);
+
+      return result;
+    } catch (err) {
+      console.error(err);
+      return result;
+    }
+  }
+
+  public valuesAt(...indexes: number[]): ListType[] {
+    const result: ListType[] = [];
+    try {
+      const addValue = (node: IListNode<ListType>) => result.push(node.value);
+      this.forEachAt(addValue, indexes);
+
+      return result;
+    } catch (err) {
+      console.error(err);
+      return result;
+    }
+  }
+
   private addFirstNode(value: ListType): void {
     const node = new ListNode(value);
     this._start = node;
@@ -369,6 +395,7 @@ export default class LinkedList<ListType = any>
     const deletedNode = this._end;
     this._end = this._end.removePrevious();
 
+    if (!this._length) this._start = null;
     return deletedNode;
   }
 
@@ -395,6 +422,7 @@ export default class LinkedList<ListType = any>
     const deletedNode = this._start;
     this._start = this._start.removeNext();
 
+    if (!this._length) this._end = null;
     return deletedNode;
   }
 
