@@ -36,25 +36,14 @@ export default class ListNode<NodeType = any> implements IListNode<NodeType> {
   public remove(): IListNode<NodeType> {
     const { next, prev } = this;
 
-    if (next && prev) {
+    if (prev) {
       prev.next = next;
+    }
+
+    if (next) {
       next.prev = prev;
     }
 
     return this;
-  }
-
-  public removeNext(): IListNode<NodeType> | null {
-    if (this.next) {
-      this.next.prev = null;
-    }
-    return this.next;
-  }
-
-  public removePrevious(): IListNode<NodeType> | null {
-    if (this.prev) {
-      this.prev.next = null;
-    }
-    return this.prev;
   }
 }
