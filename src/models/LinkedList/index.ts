@@ -1,4 +1,10 @@
-import { ForEachOptions, ILinkedList, IListNode, SortFunction } from './types';
+import {
+  ForEachOptions,
+  ILinkedList,
+  IListNode,
+  SortFunction,
+  UseDirection,
+} from './types';
 import ListNode from './ListNode';
 export default class LinkedList<ListType = any>
   implements ILinkedList<ListType> {
@@ -6,8 +12,6 @@ export default class LinkedList<ListType = any>
   protected _maxLength: number | null = null;
 
   protected _reversed = false;
-  protected _reversedInOperation = false;
-
   protected _start: IListNode<ListType> | null = null;
   protected _end: IListNode<ListType> | null = null;
 
@@ -42,24 +46,12 @@ export default class LinkedList<ListType = any>
     return this._reversed ? this._end : this._start;
   }
 
-  public set start(_: IListNode<ListType> | null) {
-    throw new Error("You can't change the first value");
-  }
-
   public get end(): IListNode<ListType> | null {
     return this._reversed ? this._start : this._end;
   }
 
-  public set end(_: IListNode<ListType> | null) {
-    throw new Error("You can't change the last value");
-  }
-
   public get length(): number {
     return this._length;
-  }
-
-  public set length(_: number) {
-    throw new Error("You can't assign a value to length property");
   }
 
   public sort(compareFn?: SortFunction<ListType>): this {
@@ -121,22 +113,29 @@ export default class LinkedList<ListType = any>
     return this;
   }
 
-  private useReversedListIf(condition: boolean, operation: Function) {
-    if (condition && !this._reversedInOperation) {
-      this._reversedInOperation = !this._reversedInOperation;
-      this._reversed = !this._reversed;
+  private useDirection(cb: UseDirection, reverse: boolean = false) {
+    if (this._reversed) {
+      // if it must to reverse the iteration again
+      if (reverse) return cb({ start: this.end, next: 'next', prev: 'prev' });
 
-      operation();
-
-      this._reversed = !this._reversed;
-      this._reversedInOperation = !this._reversedInOperation;
-    } else {
-      operation();
+      return cb({
+        start: this.start,
+        next: 'prev',
+        prev: 'next',
+      });
     }
+
+    if (reverse) return cb({ start: this.end, next: 'prev', prev: 'next' });
+    return cb({ start: this.start, next: 'next', prev: 'prev' });
   }
 
-  public forEach<result = IListNode<ListType>>(
-    fn: (value: result, index: number) => void,
+  /**
+   * @param options receive two options: reversed and includeNodes;
+   * reversed iterate for each value starting by the end, and includeNodes pass the node as item
+   * to the iterate function;
+   */
+  public forEach(
+    fn: (item: any, index: number) => void,
     options: ForEachOptions = {}
   ): void {
     const {
@@ -145,18 +144,13 @@ export default class LinkedList<ListType = any>
       toNode = this.length - 1,
     }: ForEachOptions = options;
 
-    this.useReversedListIf(reversed, () => {
-      const next = this._reversed ? 'prev' : 'next';
-      const getResult = includeNodes
-        ? (node: IListNode<ListType>) => node
-        : (node: IListNode<ListType>) => node.value;
-
+    const iterateToNode: UseDirection = ({ start, next }) => {
       let index = reversed ? this.length - 1 : 0;
-      let node = this.start,
-        nodeCount = 0;
+      let nodeCount = 0;
+      let node = start;
 
       while (node && nodeCount <= toNode) {
-        fn((getResult(node) as unknown) as result, index);
+        fn(includeNodes ? node : node.value, index);
 
         if (reversed) {
           index--;
@@ -167,7 +161,9 @@ export default class LinkedList<ListType = any>
         node = node[next];
         nodeCount++;
       }
-    });
+    };
+
+    this.useDirection(iterateToNode, reversed);
   }
 
   public forEachAt(
@@ -175,6 +171,7 @@ export default class LinkedList<ListType = any>
     indexes: number[]
   ): void {
     {
+      // Remove indexes bigger than the list
       const maxIndex = this.length - 1;
       while (indexes[indexes.length - 1] > maxIndex) {
         indexes.pop();
@@ -189,14 +186,10 @@ export default class LinkedList<ListType = any>
     const node = this.at(indexes[currentIndexToFind]);
     if (!node) return;
 
-    fn(node);
-    currentIndexToFind++;
-
     let current: IListNode<ListType> | null = node;
     const isNegativeInteger = indexes[currentIndexToFind] < 0;
 
-    this.useReversedListIf(isNegativeInteger, () => {
-      const next = this._reversed ? 'prev' : 'next';
+    const getRestIndexes: UseDirection = ({ next }) => {
       const maxIndex = Math.abs(indexes[indexes.length - 1]);
 
       while (current && currentIndex <= maxIndex) {
@@ -208,7 +201,9 @@ export default class LinkedList<ListType = any>
         current = current[next];
         currentIndex++;
       }
-    });
+    };
+
+    this.useDirection(getRestIndexes, isNegativeInteger);
   }
 
   public at(index: number): IListNode<ListType> | null | undefined {
@@ -341,46 +336,43 @@ export default class LinkedList<ListType = any>
     sort: SortFunction<ListType> = (v1, v2) => v1 < v2
   ): this {
     if (!this.start) return this.push(value);
-
-    let next: 'next' | 'prev';
-    let prev: 'next' | 'prev';
     let insert: 'insertNext' | 'insertPrevious';
 
     if (this._reversed) {
-      next = 'prev';
-      prev = 'next';
       insert = 'insertNext';
       sort = (v1, v2) => v1 > v2;
     } else {
-      next = 'next';
-      prev = 'prev';
       insert = 'insertPrevious';
     }
 
-    let node: IListNode<ListType> | null = this.start;
+    const insertionSort: UseDirection = ({ start, next, prev }) => {
+      let node = start;
 
-    while (node) {
-      if (sort(value, node.value)) {
-        const isFirstNode = node === this.start;
+      while (node) {
+        if (sort(value, node.value)) {
+          const isFirstNode = node === this.start;
 
-        if (isFirstNode) {
-          this.unshift(value);
-        } else {
-          node[insert](value, node[prev]);
-          this._length++;
+          if (isFirstNode) {
+            this.unshift(value);
+          } else {
+            node[insert](value, node[prev]);
+            this._length++;
+          }
+
+          break;
         }
 
-        break;
-      }
+        const isLastNode = !node[next];
+        if (isLastNode) {
+          this.push(value);
+          break;
+        }
 
-      const isLastNode = !node[next];
-      if (isLastNode) {
-        this.push(value);
-        break;
+        node = node[next];
       }
+    };
 
-      node = node[next];
-    }
+    this.useDirection(insertionSort);
 
     return this;
   }
