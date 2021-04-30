@@ -32,7 +32,7 @@ export default class LinkedList<ListType = any>
     }
   }
 
-  protected *[Symbol.iterator]() {
+  public *[Symbol.iterator](): Iterator<ListType> {
     const next = this._reversed ? 'prev' : 'next';
     let node = this.start;
 
@@ -52,6 +52,11 @@ export default class LinkedList<ListType = any>
 
   public get length(): number {
     return this._length;
+  }
+
+  public static from<T>(array: Iterable<T>): LinkedList<T> {
+    const list = new LinkedList(...array);
+    return list;
   }
 
   public sort(compareFn?: SortFunction<ListType>): this {
@@ -208,11 +213,13 @@ export default class LinkedList<ListType = any>
 
   public at(index: number): IListNode<ListType> | null | undefined {
     const maxIndex = this.length - 1;
-    const exceedMaxIndex = Math.abs(index) > maxIndex;
 
-    if (exceedMaxIndex || !Number.isInteger(index))
+    const exceedMaxIndex = Math.abs(index) > maxIndex;
+    if (exceedMaxIndex) return undefined;
+
+    if (!Number.isInteger(index))
       throw new Error(
-        'The index number is bigger than list length or is not a integer value.'
+        'The index number must be an integer value.'
       );
 
     const isNegativeZero = Object.is(index, -0);
@@ -281,6 +288,63 @@ export default class LinkedList<ListType = any>
     this._start = node;
     this._end = node;
     this._length++;
+  }
+
+  public moveNode({ at, to }: { at: number; to: number }): this {
+    if (!Number.isInteger(at) || !Number.isInteger(to) || Object.is(at, to))
+      return this;
+
+    const atNode = this.at(at);
+    const toNode = this.at(to);
+    if (!atNode || !toNode) return this;
+
+    const { start, end } = this;
+    const value = atNode.value;
+
+    if (atNode === start) {
+      this.shift();
+      this._length++;
+    } else if (atNode === end) {
+      this.pop();
+      this._length++;
+    } else {
+      atNode.remove();
+    }
+    const isToBeFirstNode = toNode === start;
+    if (isToBeFirstNode) {
+      this.unshift(value);
+      this._length--;
+      return this;
+    }
+
+    const isToBeLastNode = toNode === end;
+    if (isToBeLastNode) {
+      this.push(value);
+      this._length--;
+      return this;
+    }
+
+    let atIndex = at,
+      toIndex = to;
+    const length = this.length - 1;
+
+    const isNegativeAt = at < 0 || Object.is(at, -0)
+    if (isNegativeAt) {
+      atIndex = length + at;
+    }
+
+    const isNegativeTo = to < 0 || Object.is(to, -0);
+    if (isNegativeTo) {
+      toIndex = length + to;
+    }
+
+    if (atIndex < toIndex) {
+      toNode.insertNext(value, toNode.next);
+    } else {
+      toNode.insertPrevious(value, toNode.prev);
+    }
+
+    return this;
   }
 
   /**
@@ -427,14 +491,14 @@ export default class LinkedList<ListType = any>
   }
 
   public toArray(reversed: boolean = false): ListType[] {
-    let result: ListType[] = [];
+    let result: ListType[] = Array(this.length);
 
-    const parseToArray = (value: any) => {
+    const parseToArray = (value: any, index: number) => {
       const isSubList = value && value.toArray;
       if (isSubList) {
-        result.push(value.toArray());
+        result[index] = value.toArray();
       } else {
-        result.push(value);
+        result[index] = value;
       }
     };
 

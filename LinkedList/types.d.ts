@@ -1,21 +1,41 @@
-export type ForEachCallback<ListType> = (
-  node: IListNode<ListType>,
-  index: number
-) => void;
-
 export type SortFunction<ListType> = (
   value: ListType,
   current: ListType
 ) => boolean;
+
+export type IterationDirection = 'next' | 'prev';
+
+export type UseDirection = ({}: {
+  start: IListNode | null;
+  next: IterationDirection;
+  prev: IterationDirection;
+}) => void;
+
+export interface ForEachOptions {
+  toNode?: number;
+  reversed?: boolean;
+  includeNodes?: boolean;
+}
 
 export interface ILinkedList<ListType = any> {
   start: IListNode<ListType> | null;
   end: IListNode<ListType> | null;
   length: number;
 
-  forEach(callback: ForEachCallback<ListType>, options: any): void;
-  at(index: number): IListNode<ListType> | null | undefined;
-  valueAt(index: number): ListType | null | undefined;
+  [Symbol.iterator](): Iterator<ListType>;
+  forEach(
+    callback: (item: any, index: number) => void,
+    options?: ForEachOptions
+  ): void;
+  forEachAt(
+    callback: (node: IListNode<ListType>) => void,
+    indexes: number[]
+  ): void;
+  at(
+    index: number
+  ): IListNode<ListType> | null | undefined;
+  nodesAt(...indexes: number[]): IListNode<ListType>[];
+  valuesAt(...indexes: number[]): ListType[];
   /**
    * @param callback a callback that must return a condition with the its params.
    *
@@ -25,12 +45,12 @@ export interface ILinkedList<ListType = any> {
    *  @return swap > current to crescent sort;
    *  @return swap < current decrescent sort;
    */
-  sort(cb: SortFunction<ListType>): void;
-  insertSort(cb: SortFunction<ListType>): void;
-  insertFrom(from: number, ...values: ListType[]): void;
-  push(...values: ListType[]): void;
+  reverse(): this;
+  sort(cb: SortFunction<ListType>): this;
+  insertSort(value: ListType, cb: SortFunction<ListType>): this;
+  push(...values: ListType[]): this;
   pop(): IListNode<ListType> | undefined;
-  unshift(...values: ListType[]): void;
+  unshift(...values: ListType[]): this;
   shift(): IListNode<ListType> | undefined;
   toArray(): Array<ListType>;
 }
@@ -48,7 +68,5 @@ export interface IListNode<NodeType = any> {
     value: NodeType,
     prev?: IListNode<NodeType> | null
   ): IListNode<NodeType>;
-  remove(): IListNode<NodeType> | null;
-  removeNext(): IListNode<NodeType> | null;
-  removePrevious(): IListNode<NodeType> | null;
+  remove(): IListNode<NodeType>;
 }
