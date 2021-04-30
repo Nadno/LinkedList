@@ -1,4 +1,4 @@
-import LinkedList from '../models/LinkedList';
+import LinkedList from './LinkedList';
 
 describe('LinkedList', () => {
   const exampleList = ['h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd'];
