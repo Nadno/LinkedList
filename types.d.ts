@@ -33,7 +33,7 @@ export interface ILinkedList<ListType = any> {
   ): void;
   at(
     index: number
-  ): IListNode<ListType> | null | undefined;
+  ): IListNode<ListType> | undefined;
   nodesAt(...indexes: number[]): IListNode<ListType>[];
   valuesAt(...indexes: number[]): ListType[];
   /**
