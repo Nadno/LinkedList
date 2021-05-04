@@ -93,3 +93,17 @@ describe('Methods pop and shift', () => {
     });
   }
 });
+
+describe('Method remove', () => {
+  it('should remove the passed node', () => {
+    const list = new LinkedList(...exampleList);
+    const [h, whiteSpace, d] = list.nodesAt(0, 5, list.length - 1);
+
+    list.remove(h);
+    list.remove(whiteSpace);
+    list.remove(d);
+
+    expect(list.toArray().join('')).toBe('elloworl');
+    expect(list.length).toBe(exampleList.length - 3);
+  });
+});
