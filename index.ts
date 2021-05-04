@@ -211,22 +211,21 @@ export default class LinkedList<ListType = any>
     this.useDirection(getRestIndexes, isNegativeInteger);
   }
 
-  public at(index: number): IListNode<ListType> | null | undefined {
+  public at(index: number): IListNode<ListType> | undefined {
+    let result = undefined;
     const maxIndex = this.length - 1;
 
     const exceedMaxIndex = Math.abs(index) > maxIndex;
-    if (exceedMaxIndex) return undefined;
+    if (exceedMaxIndex) return result;
 
     if (!Number.isInteger(index))
-      throw new Error(
-        'The index number must be an integer value.'
-      );
+      throw new Error('The index number must be an integer value.');
 
-    const isNegativeZero = Object.is(index, -0);
-    if (isNegativeZero) {
-      return this.end;
-    } else if (index === 0) {
-      return this.start;
+    if (index === 0) {
+      const isNegativeZero = Object.is(index, -0);
+      
+      if (isNegativeZero) return this.end || result;
+      return this.start || result;
     }
 
     const options: ForEachOptions = {
@@ -243,8 +242,6 @@ export default class LinkedList<ListType = any>
 
       index = maxIndex + index;
     }
-
-    let result = undefined;
 
     const findIndex = (node: IListNode<ListType>, current: number) => {
       if (index === current) {
@@ -328,7 +325,7 @@ export default class LinkedList<ListType = any>
       toIndex = to;
     const length = this.length - 1;
 
-    const isNegativeAt = at < 0 || Object.is(at, -0)
+    const isNegativeAt = at < 0 || Object.is(at, -0);
     if (isNegativeAt) {
       atIndex = length + at;
     }
@@ -488,6 +485,18 @@ export default class LinkedList<ListType = any>
 
     if (!this._length) this._end = null;
     return removedNode;
+  }
+
+  public remove(node: IListNode<ListType>): IListNode<ListType> | undefined {
+    switch (node) {
+      case this.start:
+        return this.shift();
+      case this.end:
+        return this.pop();
+      default:
+        this._length--;
+        return node.remove();
+    }
   }
 
   public toArray(reversed: boolean = false): ListType[] {
