@@ -22,7 +22,7 @@ export interface ILinkedList<ListType = any> {
   end: IListNode<ListType> | null;
   length: number;
 
-  [Symbol.iterator](): Iterator<ListType>;
+  [Symbol.iterator](): Iterator<IListNode<ListType>>;
   forEach(
     callback: (item: any, index: number) => void,
     options?: ForEachOptions
@@ -31,9 +31,7 @@ export interface ILinkedList<ListType = any> {
     callback: (node: IListNode<ListType>) => void,
     indexes: number[]
   ): void;
-  at(
-    index: number
-  ): IListNode<ListType> | undefined;
+  at(index: number): IListNode<ListType> | undefined;
   nodesAt(...indexes: number[]): IListNode<ListType>[];
   valuesAt(...indexes: number[]): ListType[];
   /**
