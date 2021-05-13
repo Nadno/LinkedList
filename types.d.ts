@@ -50,6 +50,7 @@ export interface ILinkedList<ListType = any> {
   pop(): IListNode<ListType> | undefined;
   unshift(...values: ListType[]): this;
   shift(): IListNode<ListType> | undefined;
+  remove(node: IListNode<ListType>): IListNode<ListType> | undefined;
   toArray(): Array<ListType>;
 }
 
