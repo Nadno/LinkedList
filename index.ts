@@ -7,7 +7,8 @@ import {
 } from './types';
 import ListNode from './ListNode';
 export default class LinkedList<ListType = any>
-  implements ILinkedList<ListType> {
+  implements ILinkedList<ListType>
+{
   protected _length = 0;
   protected _maxLength: number | null = null;
 
@@ -32,12 +33,12 @@ export default class LinkedList<ListType = any>
     }
   }
 
-  public *[Symbol.iterator](): Iterator<ListType> {
+  public *[Symbol.iterator](): Iterator<IListNode<ListType>> {
     const next = this._reversed ? 'prev' : 'next';
     let node = this.start;
 
     while (node != null) {
-      yield node.value;
+      yield node;
       node = node[next];
     }
   }
@@ -223,7 +224,7 @@ export default class LinkedList<ListType = any>
 
     if (index === 0) {
       const isNegativeZero = Object.is(index, -0);
-      
+
       if (isNegativeZero) return this.end || result;
       return this.start || result;
     }
@@ -397,14 +398,12 @@ export default class LinkedList<ListType = any>
     sort: SortFunction<ListType> = (v1, v2) => v1 < v2
   ): this {
     if (!this.start) return this.push(value);
-    let insert: 'insertNext' | 'insertPrevious';
 
-    if (this._reversed) {
-      insert = 'insertNext';
-      sort = (v1, v2) => v1 > v2;
-    } else {
-      insert = 'insertPrevious';
-    }
+    let insert: 'insertNext' | 'insertPrevious' = this._reversed
+      ? 'insertNext'
+      : 'insertPrevious';
+
+    if (this._reversed) sort = (v1, v2) => v1 > v2;
 
     const insertionSort: UseDirection = ({ start, next, prev }) => {
       let node = start;
