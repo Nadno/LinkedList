@@ -1,4 +1,4 @@
-import LinkedList from '../';
+import LinkedList from '../LinkedArray';
 
 describe('Method reverse', () => {
   const exampleList = ['h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd'];
@@ -17,8 +17,8 @@ describe('Method reverse', () => {
   it('should reverse the direction of for...of iteration', () => {
     let result = '';
 
-    for (let letter of list) {
-      result += letter;
+    for (let node of list) {
+      result += node.value;
     }
 
     expect(result).toBe(reversedHelloWorld);

@@ -1,8 +1,8 @@
-import LinkedList from '../';
+import LinkedList from '../LinkedArray';
 
 describe('Method forEach', () => {
   const exampleList = ['h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd'];
-  
+
   it('should iterate for each value into the list', () => {
     const list = new LinkedList(...exampleList);
     let result = '';
@@ -18,13 +18,10 @@ describe('Method forEach', () => {
     const list = new LinkedList(...exampleList);
     let expectedNode = list.start;
 
-    list.forEach(
-      node => {
-        expect(node === expectedNode).toBe(true);
-        expectedNode = node.next;
-      },
-      { includeNodes: true }
-    );
+    list.forEach((_, node) => {
+      expect(node === expectedNode).toBe(true);
+      expectedNode = node.next;
+    });
   });
 
   it('should iterate for each value into the list starting by the end and ending by the start', () => {
@@ -32,11 +29,11 @@ describe('Method forEach', () => {
     let expectedNode = list.end;
 
     list.forEach(
-      node => {
+      (_, node) => {
         expect(node === expectedNode).toBe(true);
         expectedNode = node.prev;
       },
-      { includeNodes: true, reversed: true }
+      { reversed: true }
     );
   });
 });

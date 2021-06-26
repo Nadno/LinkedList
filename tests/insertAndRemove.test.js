@@ -1,4 +1,4 @@
-import LinkedList from '../';
+import LinkedList from '../LinkedArray';
 
 const exampleList = ['h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd'];
 

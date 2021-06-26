@@ -1,4 +1,4 @@
-import LinkedList from '../';
+import LinkedList from '../LinkedArray';
 
 describe('Method moveNove', () => {
   const exampleList = ['h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd'];
@@ -10,7 +10,7 @@ describe('Method moveNove', () => {
     let current = list.length - 1;
     const node = list.end;
 
-    list.forEach((_, index) => {
+    list.forEach((_, __, index) => {
       list.moveNode({ at: current, to: index });
       expect(list.at(index).value).toBe(node.value);
 
@@ -24,7 +24,7 @@ describe('Method moveNove', () => {
     let current = 0;
     const node = list.start;
 
-    list.forEach((_, index) => {
+    list.forEach((_, __, index) => {
       list.moveNode({ at: current, to: -index });
       expect(list.at(-index).value).toBe(node.value);
 

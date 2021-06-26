@@ -1,4 +1,4 @@
-import LinkedList from '../';
+import LinkedList from '../LinkedArray';
 
 describe('Method sort', () => {
   it('should sort the list', () => {
@@ -23,14 +23,20 @@ describe('Method sort', () => {
 });
 
 describe('Method insertSort', () => {
+  const SORT_FN = (a, b) => a < b;
   it('should insert all values in crescent order', () => {
-    const list = new LinkedList('b', 'c', 'd');
-    const expected = ['a', 'b', 'b', 'c', 'd', 'e', 'f'];
+    const list = new LinkedList();
+    let expected = [
+      'Gabriel',
+      'Gael',
+      'Guevin',
+      'Guilherme',
+      'Guilherme',
+      'Gustavo',
+      'Gustavo',
+    ];
 
-    list.insertSort('b');
-    list.insertSort('e');
-    list.insertSort('a');
-    list.insertSort('f');
+    expected.forEach(name => list.insertSort(name, SORT_FN));
 
     expect(list.toArray()).toEqual(expected);
     expect(list.length).toEqual(expected.length);
@@ -38,19 +44,20 @@ describe('Method insertSort', () => {
 
   it('should insert all values in decrescent order when the list were reversed', () => {
     const list = new LinkedList();
-    const expected = ['a', 'b', 'b', 'c', 'd', 'e', 'f'].reverse();
+    let expected = [
+      'Gabriel',
+      'Gael',
+      'Guevin',
+      'Guilherme',
+      'Guilherme',
+      'Gustavo',
+      'Gustavo',
+    ];
 
+    expected.forEach(name => list.insertSort(name, SORT_FN));
     list.reverse();
 
-    list.insertSort('b');
-    list.insertSort('c');
-    list.insertSort('d');
-    list.insertSort('b');
-    list.insertSort('e');
-    list.insertSort('a');
-    list.insertSort('f');
-
-    expect(list.toArray()).toEqual(expected);
+    expect(list.toArray()).toEqual(expected.reverse());
     expect(list.length).toEqual(expected.length);
   });
 });
