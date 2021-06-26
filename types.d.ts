@@ -1,20 +1,19 @@
 export type SortFunction<ListType> = (
-  value: ListType,
-  current: ListType
+	value: ListType,
+	current: ListType
 ) => boolean;
 
 export type IterationDirection = 'next' | 'prev';
 
 export type UseDirection = ({}: {
-  start: IListNode | null;
-  next: IterationDirection;
-  prev: IterationDirection;
+	start?: IListNode;
+	next: IterationDirection;
+	prev: IterationDirection;
 }) => void;
 
 export interface ForEachOptions {
-  toNode?: number;
-  reversed?: boolean;
-  includeNodes?: boolean;
+	toNode?: number;
+	reversed?: boolean;
 }
 
 export interface ILinkedList<ListType = any> {
